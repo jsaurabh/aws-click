@@ -26,7 +26,6 @@ def worker(create, delete):
 
     if create:        
         keypair = ec2.create_key_pair(KeyName=create)
-        print(keypair['KeyMaterial'])
         filename = create + ".pem"
         with open(filename, 'w') as key:
             key.write(keypair['KeyMaterial'])
