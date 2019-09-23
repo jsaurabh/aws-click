@@ -1,6 +1,7 @@
 import click
 import boto3 as b3
 from botocore.exceptions import ClientError
+
 ec2 = b3.client('ec2')
 
 @click.command()
@@ -9,7 +10,8 @@ ec2 = b3.client('ec2')
     help = "Enable or disable CloudWatch monitoring for your instance. \
     Go to https://console.aws.amazon.com/cloudwatch for more details")
 
-@click.option("--describe", "--d", help = "Describe the instance")
+@click.option("--describe", "--d", is_flag = True,
+    help = "Describe the instance")
 
 @click.argument('id')
 
@@ -17,15 +19,18 @@ def instances(monitor, describe, id):
     if describe:
         try:
             response = ec2.describe_instances(InstanceIds=[id])
-            print("Describing instance id: " + describe)
-            print(response['Reservations'][0])
+            print("Describing instance id: " + id)
+            print(response)
+        
         except ClientError as e:
-            print("Please enter valid Instance identifier") 
+            print("Please enter valid instance identifier")
+            print(e)
+
     elif monitor:
         if monitor == "ON":
             print("Enabling Detailed Monitoring")
             response = ec2.monitor_instances(InstanceIds=[id])
-            #(response)
+            print(response)
         else:
             print("Switching to Basic Monitoring")
             response = ec2.unmonitor_instances(InstanceIds=[id])

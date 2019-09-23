@@ -6,11 +6,11 @@ ec2 = b3.client('ec2')
 @click.command()
 @click.option(
     "--create",
-    help = "Enter name for new keypair. The public key will be pushed to AWS and the private key will be saved locally")
+    help = "Enter name for new keypair. The public key will be pushed to AWS and the private key will be saved locally.")
         
 @click.option(
     "--delete",
-    help = "Enter name for keypair to delete. The public key will be deleted from AWS"
+    help = "Enter name for keypair to delete. The public key will be deleted from AWS. "
 )
 
 ## TODO: Add keypair describe. Moderate change to docstring, and definition
@@ -29,11 +29,15 @@ def worker(create, delete):
         filename = create + ".pem"
         with open(filename, 'w') as key:
             key.write(keypair['KeyMaterial'])
+            print("Keypair was created successfully.")
+            print("Save keypair file locally. You'll need it later to connect to your instance.")
 
     if delete:
         keypair = ec2.delete_key_pair(KeyName=delete)
         print(delete + " has been deleted. Please set up a different keypair to access compute resources")
-        print(keypair)
+    
+    if not delete and not create:
+        click.echo("Please enter an argument and its value. Refer to --help for usage details.")
 
 if __name__ == "__main__":
     worker()
