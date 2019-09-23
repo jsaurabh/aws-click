@@ -1,5 +1,9 @@
 import click
 import boto3 as b3
+import shutil
+from botocore.exceptions import ClientError
+from pathlib import Path
+from config import Config
 
 ec2 = b3.client('ec2')
 
@@ -24,18 +28,45 @@ def worker(create, delete):
     returns None.
     """
 
-    if create:        
-        keypair = ec2.create_key_pair(KeyName=create)
-        filename = create + ".pem"
-        with open(filename, 'w') as key:
-            key.write(keypair['KeyMaterial'])
+    if create:
+        try:        
+            keypair = ec2.create_key_pair(KeyName=create)
             print("Keypair was created successfully.")
-            print("Save keypair file locally. You'll need it later to connect to your instance.")
+            filename = create + ".pem"
+            with open(filename, 'w') as key:
+                key.write(keypair['KeyMaterial'])
+            print("Keypair file has been saved locally under current working directory")
+            print(keypair)
+            
+            if Config.has_section(create):
+                Config.add_to_section(create, "name", keypair['KeyName'])
+                Config.add_to_section(create, "fingerprint", keypair["KeyFingerprint"])
+            else:
+                Config.add_new_section(create)
+                Config.add_to_section(create, "name", keypair["KeyName"])
+                Config.add_to_section(create, "fingerprint", keypair["KeyFingerprint"])
+
+            with open('config.ini', 'w') as configfile:
+                Config.write(configfile)
+
+        except ClientError as e:
+            print(e)
+        except FileNotFoundError as e:
+            print(e)
 
     if delete:
-        keypair = ec2.delete_key_pair(KeyName=delete)
-        print(delete + " has been deleted. Please set up a different keypair to access compute resources")
-    
+        try:
+            keypair = ec2.delete_key_pair(KeyName=delete)
+            print(delete + " has been deleted. Please set up a different keypair to access compute resources")
+
+            if Config.has_section(delete):
+                Config.remove_section(delete)
+            with open('config.ini', 'w') as configfile:
+                Config.write(configfile)
+            
+        except ClientError as e:
+            print(e)
+            
     if not delete and not create:
         click.echo("Please enter an argument and its value. Refer to --help for usage details.")
 
