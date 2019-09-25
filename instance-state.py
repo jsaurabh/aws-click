@@ -26,12 +26,13 @@ def worker(action, dry):
             response = ec2.start_instances(InstanceIds=[instance_id], DryRun = dry)
             print(response)
             print("Instance started.")
+            print("Please remember to turn off your instance when you're done.")
         except ClientError as e:
             if 'DryRunOperation' not in str(e):
                 print("Please make sure that you have the necessary permissions.")
                 raise 
             print(error)
-    
+        
     elif action.lower() == "off":
         print("You are stopping an instance")
         try:

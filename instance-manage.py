@@ -1,6 +1,7 @@
 import click
 import boto3 as b3
 from botocore.exceptions import ClientError
+from config import Config
 
 ec2 = b3.client('ec2')
 
@@ -13,9 +14,11 @@ ec2 = b3.client('ec2')
 @click.option("--describe", "--d", is_flag = True,
     help = "Describe the instance")
 
-@click.argument('id')
+#@click.argument('id')
 
-def instances(monitor, describe, id):
+def instances(monitor, describe):
+    instance = input("Choose an instance name to act upon(config.ini):")
+    id = Config.get_from_section('current', instance)
     if describe:
         try:
             response = ec2.describe_instances(InstanceIds=[id])

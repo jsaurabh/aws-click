@@ -9,7 +9,7 @@ ec2C = b3.client('ec2')
 AMI = {
     "GPU":{
         "Windows": {
-            "AMI" : 'ami-0845b2806f525f91d' 
+            "AMI" : 'ami-03339dbbf0e121db6' 
         },
         "Linux" : {
             "AMI" : 'ami-0845b2806f525f91d'
@@ -17,7 +17,7 @@ AMI = {
     },
     "CPU":{
         "Windows": {
-            "AMI" : 'ami-0845b2806f525f91d'
+            "AMI" : 'ami-0ba24b8667115438c'
         },
         "Linux": {
             "AMI" : 'ami-0845b2806f525f91d'
@@ -54,7 +54,7 @@ def worker(instance, keypair, dry):
     """
     
     try:
-        assert len(instance) == 2, "Please enter only two arguments"
+        assert len(instance) == 2, "Please enter two arguments for --i"
         assert keypair is not None, "Please enter a keypair to use with the instance"
 
     except ClientError as e:
@@ -82,6 +82,11 @@ def worker(instance, keypair, dry):
         if not ami:
             ami = AMI[compute][platform]
 
+        count = input("Please enter the integer value of instances you want to create:")
+        if count:
+            count = int(count)
+        if not count:
+            count = 1
         # print("")
         # print("Enter Yes or No")
         # print("If you enter yes, the instance can't be terminated without modifying instance properties")
@@ -93,12 +98,12 @@ def worker(instance, keypair, dry):
         #     allowTerminate = False
         # else:
         #     allowTerminate = True
-        
+
         try:
             instance = ec2R.create_instances(
                 BlockDeviceMappings = [
                     {
-                        "DeviceName":"/dev/xvda",
+                        "DeviceName":"/dev/sda1",
                         "Ebs":{
                             "DeleteOnTermination" : True,
                             "VolumeSize" : storage
@@ -109,7 +114,7 @@ def worker(instance, keypair, dry):
                 InstanceType = instance_type,
                 KeyName = keypair,
                 MinCount = 1,
-                MaxCount = 2,
+                MaxCount = count,
                 Monitoring =
                 {
                     "Enabled": True
@@ -124,7 +129,7 @@ def worker(instance, keypair, dry):
             print(e)
             return None
         
-        print("Your instance has been created successfully.")
+        print("Your instance has been launched successfully.")
      
         count = 0
         for instances in instance:
@@ -134,7 +139,7 @@ def worker(instance, keypair, dry):
                 #print("")
                 print("Please wait while the instance is up and running")
                 instances.wait_until_running()
-
+                print("Instance id: " + str(instances.id))
                 elasticIP = ec2C.allocate_address(Domain = 'vpc', DryRun = dry)
                 print("Static IP address has been allocated: " + str(elasticIP['PublicIp']))
                 set_ip(elasticIP['PublicIp'], count)
@@ -151,7 +156,7 @@ def worker(instance, keypair, dry):
 
         print("Instance(s) associated with Static IP")
         print("Go ahead and start using the instance with the static IP.\
-For instructions on Remote Desktop on Windows, refer to RDP-Windows.md")
+ Instructions on setting up Remote Desktop can be found in RDP.md under docs")
         return None
         #return instance[0], elasticIP['PublicIp']
 
