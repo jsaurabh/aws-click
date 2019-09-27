@@ -7,18 +7,17 @@ ec2 = b3.client('ec2')
 
 @click.command()
 @click.option(
-    "--monitor", "--m", default = "ON",
+    "--monitor", "--m", type = click.Choice(['on', 'off']),
     help = "Enable or disable CloudWatch monitoring for your instance. \
     Go to https://console.aws.amazon.com/cloudwatch for more details")
 
 @click.option("--describe", "--d", is_flag = True,
     help = "Describe the instance")
 
-#@click.argument('id')
-
 def instances(monitor, describe):
-    instance = input("Choose an instance name to act upon(config.ini):")
-    id = Config.get_from_section('current', instance)
+    instance = input("Choose an instance tag name to act upon(config.ini):")
+    id = Config.get_from_section(instance, 'id')
+
     if describe:
         try:
             response = ec2.describe_instances(InstanceIds=[id])
@@ -26,12 +25,11 @@ def instances(monitor, describe):
             print(response)
         
         except ClientError as e:
-            print("Please enter valid instance identifier")
             print(e)
 
-    elif monitor:
-        if monitor == "ON":
-            print("Enabling Detailed Monitoring")
+    else:
+        if monitor == "on":
+            print("Switching to Detailed Monitoring")
             response = ec2.monitor_instances(InstanceIds=[id])
             print(response)
         else:

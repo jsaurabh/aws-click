@@ -37,17 +37,6 @@ def worker(create, delete):
                 key.write(keypair['KeyMaterial'])
             print("Keypair file has been saved locally under current working directory")
             print(keypair)
-            
-            if Config.has_section(create):
-                Config.add_to_section(create, "name", keypair['KeyName'])
-                Config.add_to_section(create, "fingerprint", keypair["KeyFingerprint"])
-            else:
-                Config.add_new_section(create)
-                Config.add_to_section(create, "name", keypair["KeyName"])
-                Config.add_to_section(create, "fingerprint", keypair["KeyFingerprint"])
-
-            with open('config.ini', 'w') as configfile:
-                Config.write(configfile)
 
         except ClientError as e:
             print(e)
@@ -58,11 +47,6 @@ def worker(create, delete):
         try:
             keypair = ec2.delete_key_pair(KeyName=delete)
             print(delete + " has been deleted. Please set up a different keypair to access compute resources")
-
-            if Config.has_section(delete):
-                Config.remove_section(delete)
-            with open('config.ini', 'w') as configfile:
-                Config.write(configfile)
             
         except ClientError as e:
             print(e)

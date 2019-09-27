@@ -36,3 +36,7 @@ class Config:
     @classmethod
     def write(cls, file):
         return cls.configParser.write(file)
+
+    @classmethod
+    def update(cls, section, key, val):
+        return cls.configParser.set(section, key, val)

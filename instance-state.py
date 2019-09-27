@@ -1,14 +1,16 @@
 import click
 import boto3 as b3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ParamValidationError
 from config import Config
-error = "Error. Please make sure the instance ID is valid and belongs to you."
+from utils import update
+
 ec2 = b3.client('ec2')
+error = "Error. Please make sure the instance ID is valid and belongs to you"
 
 @click.command()
 @click.option(
-    "--action","--a",
-    help = "Start, stop, reboot or terminate an instance. Arguments include on, off, reboot and terminate for respective effect."
+    "--action","--a", type=click.Choice(['on', 'off', 'reboot', 'terminate']),
+    help = "Start, stop, reboot or terminate an instance."
 )
 
 @click.option(
@@ -17,60 +19,63 @@ ec2 = b3.client('ec2')
 )
 
 def worker(action, dry):
-    instance = input("Choose an instance name to act upon(config.ini):")
-    instance_id = Config.get_from_section('current', instance)
+    try:
+        instance = input("Choose an instance tag to act upon(config.ini):")
+        instance_id = Config.get_from_section(instance, 'id')
 
-    if action.lower() == "on":
-        print("You are starting an instance")
-        try:
-            response = ec2.start_instances(InstanceIds=[instance_id], DryRun = dry)
-            print(response)
-            print("Instance started.")
-            print("Please remember to turn off your instance when you're done.")
-        except ClientError as e:
-            if 'DryRunOperation' not in str(e):
-                print("Please make sure that you have the necessary permissions.")
-                raise 
-            print(error)
-        
-    elif action.lower() == "off":
-        print("You are stopping an instance")
-        try:
-            response = ec2.stop_instances(InstanceIds=[instance_id], DryRun = dry)
-            print(response)
-            print("Instance stopped.")
-        except ClientError as e:
-            if 'DryRunOperation' not in str(e):
-                print("Check completed.")
-                raise        
-            print(error)
-
-    elif action.lower() == "reboot":
-        print("You are rebooting an instance")
-        try:
-            response = ec2.reboot_instances(InstanceIds=[instance_id], DryRun = dry)
-            print(response)
-            print("Instance rebooted.")
-        except ClientError as e:
-            if 'DryRunOperation' not in str(e):
-                print("You don't have permission to reboot instances.")
-                raise
-            print(error)
-        
-    elif action.lower() == "terminate":
-        print("You are terminating an instance")
-        try:
-            response = ec2.terminate_instances(InstanceIds=[instance_id], DryRun = dry)
-            print(response)
-            print("Instance terminated.")
-        except ClientError as e:
-            if 'DryRunOperation' not in str(e):
+        if action.lower() == "on":
+            print("You are starting an instance")
+            try:
+                response = ec2.start_instances(InstanceIds=[instance_id], DryRun = dry)
+                print(response)
+                update(instance, 'state', 'running')
+                print("Please remember to turn off your instance when you're done.")
+            except ClientError as e:
+                if 'DryRunOperation' not in str(e):
+                    print(permission)
+                    raise 
                 print(error)
-                raise
-            print("You don't have permission to terminate instances. Change Termination Protection policy to terminate the instance programatically.")
-        
-    else:
-        print("Please enter a valid action. Available actions include start, stop, reboot or terminate instance")
+            
+        elif action.lower() == "off":
+            print("You are stopping an instance")
+            try:
+                response = ec2.stop_instances(InstanceIds=[instance_id], DryRun = dry)
+                print(response)
+                update(instance, 'state', 'stopped')
+            except ClientError as e:
+                if 'DryRunOperation' not in str(e):
+                    print(permission)
+                    raise        
+                print(error)
+
+        elif action.lower() == "reboot":
+            print("You are rebooting an instance")
+            try:
+                response = ec2.reboot_instances(InstanceIds=[instance_id], DryRun = dry)
+                print(response)
+            except ClientError as e:
+                if 'DryRunOperation' not in str(e):
+                    print(e)
+                    raise
+                print(error)
+            
+        elif action.lower() == "terminate":
+            print("You are terminating an instance")
+            try:
+                response = ec2.terminate_instances(InstanceIds=[instance_id], DryRun = dry)
+                print(response)
+                update(instance, 'state', 'terminated')
+            except ClientError as e:
+                if 'DryRunOperation' not in str(e):
+                    print(error)
+                    raise
+            
+        else:
+            print("Please enter a valid action. Look at help for instructions")
+    except ClientError as e:
+        print(e)
+    except ParamValidationError as e:
+        print("Please enter arguments and values")
 
 if __name__ == "__main__":
     worker()

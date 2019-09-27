@@ -1,7 +1,7 @@
 import click
 import boto3 as b3
 from botocore.exceptions import ClientError, WaiterError
-from utils import set_instance, set_ip
+from utils import set_info
 
 ec2R = b3.resource('ec2')
 ec2C = b3.client('ec2')
@@ -9,7 +9,7 @@ ec2C = b3.client('ec2')
 AMI = {
     "GPU":{
         "Windows": {
-            "AMI" : 'ami-03339dbbf0e121db6' 
+            "AMI" : 'ami-029d3b21a4cdad1e3' 
         },
         "Linux" : {
             "AMI" : 'ami-0845b2806f525f91d'
@@ -17,7 +17,7 @@ AMI = {
     },
     "CPU":{
         "Windows": {
-            "AMI" : 'ami-0ba24b8667115438c'
+            "AMI" : 'ami-029d3b21a4cdad1e3'
         },
         "Linux": {
             "AMI" : 'ami-0845b2806f525f91d'
@@ -38,8 +38,8 @@ If no keypair exists, create a new one using keypair.py")
 
 @click.option(
     "--dry", is_flag = True,
-    help = "Set to True to test if you have permission to launch instances. Will \
-        lead to DryRunOperation if permissions exist. To create the instance, remove --dry flag from input."
+    help = "Set to True to test if you have permission to launch instances.\
+To create the instance, remove --dry flag from input."
 )
 
 def worker(instance, keypair, dry):
@@ -53,13 +53,8 @@ def worker(instance, keypair, dry):
     :returns Instance ID. If error, returns None.
     """
     
-    try:
-        assert len(instance) == 2, "Please enter two arguments for --i"
-        assert keypair is not None, "Please enter a keypair to use with the instance"
-
-    except ClientError as e:
-        print("Refer to --help for usage")
-        return None
+    assert len(instance) == 2, "Please enter two arguments for --i"
+    assert keypair is not None, "Please enter a keypair to use with the instance"
 
     if instance:
         compute, platform = instance
@@ -68,7 +63,7 @@ def worker(instance, keypair, dry):
         print("Enter custom config. Leave blank for default values")
         print("")
          
-        instance_type = input("Enter the instance type:")
+        instance_type = input("Enter instance type:")
         if not instance_type:
             instance_type = 'g3s.xlarge'
         
@@ -76,31 +71,24 @@ def worker(instance, keypair, dry):
         if storage:
             storage = int(storage)
         if not storage:
-            storage = 100
+            storage = 300
 
-        ami = input("If you've got a pre-defined AMI, please enter the ID here:")
+        ami = input("Enter AMI image ID if you have one:")
         if not ami:
             ami = AMI[compute][platform]
 
-        count = input("Please enter the integer value of instances you want to create:")
+        count = input("Enter the integer value of number of instances you want to create:")
         if count:
             count = int(count)
         if not count:
             count = 1
-        # print("")
-        # print("Enter Yes or No")
-        # print("If you enter yes, the instance can't be terminated without modifying instance properties")
-        # terminate = input("Disable instance termination:")
-         
-        # if not terminate:
-        #     allowTerminate = True
-        # elif terminate == "No":
-        #     allowTerminate = False
-        # else:
-        #     allowTerminate = True
+        
+        tag = input("Enter a tag to associate with the instance: ")
+        while not tag:
+            tag = input("Enter a tag to associate with the instance: ")
 
         try:
-            instance = ec2R.create_instances(
+            instances = ec2R.create_instances(
                 BlockDeviceMappings = [
                     {
                         "DeviceName":"/dev/sda1",
@@ -115,10 +103,7 @@ def worker(instance, keypair, dry):
                 KeyName = keypair,
                 MinCount = 1,
                 MaxCount = count,
-                Monitoring =
-                {
-                    "Enabled": True
-                },
+                Monitoring = {"Enabled": True},
                 DryRun = dry,
                 DisableApiTermination = False,
                 #DisableApiTermination = allowTerminate
@@ -128,37 +113,27 @@ def worker(instance, keypair, dry):
         except ClientError as e:
             print(e)
             return None
-        
-        print("Your instance has been launched successfully.")
      
-        count = 0
-        for instances in instance:
-            count +=1
+        for instance in instances:
             try:
-                set_instance(instances.id, count)
-                #print("")
                 print("Please wait while the instance is up and running")
-                instances.wait_until_running()
+                instance.wait_until_running()
                 print("Instance id: " + str(instances.id))
                 elasticIP = ec2C.allocate_address(Domain = 'vpc', DryRun = dry)
                 print("Static IP address has been allocated: " + str(elasticIP['PublicIp']))
-                set_ip(elasticIP['PublicIp'], count)
 
-                ec2C.associate_address(
-                    InstanceId = instances.id,
+                ec2C.associate_address( 
+                    InstanceId = instance.id,
                     DryRun = dry,
-                    AllocationId = elasticIP["AllocationId"]
-                )
-                print("")
+                    AllocationId = elasticIP["AllocationId"])
+
             except WaiterError as e:
                 print(e)
                 print("Please make sure any AWS resource limits have not been reached")
 
-        print("Instance(s) associated with Static IP")
-        print("Go ahead and start using the instance with the static IP.\
- Instructions on setting up Remote Desktop can be found in RDP.md under docs")
+        print("Your instance has been launched and configured successfully.\
+Instructions on setting up Remote Desktop can be found in RDP.md under docs")
         return None
-        #return instance[0], elasticIP['PublicIp']
 
 if __name__ == "__main__":
     worker()
