@@ -87,6 +87,9 @@ def worker(instance, keypair, dry):
         while not tag:
             tag = input("Enter a tag to associate with the instance: ")
 
+        sg_id = input("Enter security group ID: ")
+        while not tag:
+            sg_id = input("Please enter a security group. Create one using instance-networking.py if you haven't configured one")
         try:
             instances = ec2R.create_instances(
                 BlockDeviceMappings = [
@@ -103,10 +106,10 @@ def worker(instance, keypair, dry):
                 KeyName = keypair,
                 MinCount = 1,
                 MaxCount = count,
-                Monitoring = {"Enabled": True},
+                SecurityGroupIds = [sg_id],
+                Monitoring = {"Enabled": False},
                 DryRun = dry,
                 DisableApiTermination = False,
-                #DisableApiTermination = allowTerminate
                 InstanceInitiatedShutdownBehavior = "stop"
             )
 
