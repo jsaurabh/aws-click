@@ -14,7 +14,7 @@ ec2 = b3.client('ec2')
 @click.option("--describe", "--d", is_flag = True,
     help = "Describe the instance")
 
-def instances(monitor, describe):
+def worker(monitor, describe):
     instance = input("Choose an instance tag name to act upon(config.ini):")
     id = Config.get_from_section(instance, 'id')
 
@@ -38,4 +38,4 @@ def instances(monitor, describe):
             print(response)
 
 if __name__ == "__main__":
-    instances()
+    worker()

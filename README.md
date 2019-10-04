@@ -22,7 +22,7 @@ Follow the instructions available here at the [documentation](https://docs.aws.a
 
 Remember to save your credentials as this is the only time you'll be able to access them in plain text. In a terminal window, type in 'aws configure' and enter in the secure key and access key. Next, choose a region. For consistency, use us-east-1 as the default region.
 
-    AWS Config
+    aws configure
     Access Key ID: your access key ID
     Secret Access Key: your secret key
     Default region: us-east-1
@@ -32,8 +32,8 @@ If you've never created an AWS keypair before, go ahead and create one now, with
     
     python keypair.py --create [name]
 
-Great! The initial config is all done. You can go ahead and start checking out resources.
+Great! Now, go on and create a new security group. Security groups define the inbound and traffic rules for any AWS resource, acting as a firewall. Just run the file 'instance-networking.py' and you're good to go. Refer to --help if you need instructions on usage.
 
-## EC2 Instances
+Detailed instructions on how to launch, use and modify AWS resources can be found in the Docs
 
 

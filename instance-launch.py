@@ -9,18 +9,18 @@ ec2C = b3.client('ec2')
 AMI = {
     "GPU":{
         "Windows": {
-            "AMI" : 'ami-029d3b21a4cdad1e3' 
+            "AMI" : '' 
         },
         "Linux" : {
-            "AMI" : 'ami-0845b2806f525f91d'
+            "AMI" : ''
         }
     },
     "CPU":{
         "Windows": {
-            "AMI" : 'ami-029d3b21a4cdad1e3'
+            "AMI" : ''
         },
         "Linux": {
-            "AMI" : 'ami-0845b2806f525f91d'
+            "AMI" : ''
         }
     }
 }
