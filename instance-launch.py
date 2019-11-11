@@ -12,7 +12,7 @@ AMI = {
             "AMI" : '' 
         },
         "Linux" : {
-            "AMI" : ''
+            "AMI" : 'ami-0526826e322798a8f'
         }
     },
     "CPU":{
@@ -45,7 +45,7 @@ To create the instance, remove --dry flag from input."
 def worker(instance, keypair, dry):
     """
     Provision and launch an EC2 instance
-    The method returns without waiting for the instance to reach
+    The method returns after waiting for the instance to reach
     a running state.
 
     :param instance: tuple, containing the AMI image_id and the instance type
@@ -63,11 +63,11 @@ def worker(instance, keypair, dry):
         print("Enter custom config. Leave blank for default values")
         print("")
          
-        instance_type = input("Enter instance type:")
+        instance_type = input("Enter instance type (default g3s.xlarge):")
         if not instance_type:
             instance_type = 'g3s.xlarge'
         
-        storage = input("Enter an integer value as the amount of storage (in GB):")
+        storage = input("Enter an integer value as the amount of storage (default 300 GB):")
         if storage:
             storage = int(storage)
         if not storage:
@@ -77,7 +77,7 @@ def worker(instance, keypair, dry):
         if not ami:
             ami = AMI[compute][platform]
 
-        count = input("Enter the integer value of number of instances you want to create:")
+        count = input("Enter the integer value of number of instances you want to create(default 1):")
         if count:
             count = int(count)
         if not count:
@@ -88,8 +88,8 @@ def worker(instance, keypair, dry):
             tag = input("Enter a tag to associate with the instance: ")
 
         sg_id = input("Enter security group ID: ")
-        while not tag:
-            sg_id = input("Please enter a security group. Create one using instance-networking.py if you haven't configured one")
+        while not sg_id:
+            sg_id = input("Please enter a security group: ")
         try:
             instances = ec2R.create_instances(
                 BlockDeviceMappings = [
@@ -106,7 +106,7 @@ def worker(instance, keypair, dry):
                 KeyName = keypair,
                 MinCount = 1,
                 MaxCount = count,
-                SecurityGroupIds = [sg_id],
+                # SecurityGroupIds = [sg_id],
                 Monitoring = {"Enabled": False},
                 DryRun = dry,
                 DisableApiTermination = False,
@@ -121,7 +121,8 @@ def worker(instance, keypair, dry):
             try:
                 print("Please wait while the instance is up and running")
                 instance.wait_until_running()
-                print("Instance id: " + str(instances.id))
+                print("\n")
+                print("Instance id: " + str(instances[0]))
                 elasticIP = ec2C.allocate_address(Domain = 'vpc', DryRun = dry)
                 print("Static IP address has been allocated: " + str(elasticIP['PublicIp']))
 
@@ -134,8 +135,8 @@ def worker(instance, keypair, dry):
                 print(e)
                 print("Please make sure any AWS resource limits have not been reached")
 
-        print("Your instance has been launched and configured successfully.\
-Instructions on setting up Remote Desktop can be found in RDP.md under docs")
+        print("\nYour instance has been launched and configured successfully.\
+Instructions on using VNC can be found under docs")
         return None
 
 if __name__ == "__main__":

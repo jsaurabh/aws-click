@@ -32,8 +32,12 @@ If you've never created an AWS keypair before, go ahead and create one now, with
     
     python keypair.py --create [name]
 
-Great! Now, go on and create a new security group. Security groups define the inbound and traffic rules for any AWS resource, acting as a firewall. Just run the file 'instance-networking.py' and you're good to go. Refer to --help if you need instructions on usage.
+Great! Now, go on and create a new security group. Security groups define the inbound and traffic rules for any AWS resource, acting as a firewall. Just run 
 
-Detailed instructions on how to launch, use and modify AWS resources can be found in the Docs
+    python instance-networking.py --create [name]
+
+and you're good to go. Refer to --help if you need instructions on usage.
+
+That's it. One time setup is now complete. Refer to [docs](/https://github.com/droneslab/enhance-aws/tree/master/docs) for detailed instructions on how to launch, use and modify AWS resources.
 
 
