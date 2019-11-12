@@ -36,6 +36,7 @@ def worker(create, delete):
             with open(filename, 'w') as key:
                 key.write(keypair['KeyMaterial'])
             print("Keypair file has been saved locally under current working directory")
+            print("Please move to ~/.ssh on your machine and make it unreadable")
             print(keypair)
 
         except ClientError as e:
